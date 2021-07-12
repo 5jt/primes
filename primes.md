@@ -501,6 +501,9 @@ q)\ts ips1 R2
 The comparison above omits any filtering. 
 The better performance comes entirely from passing only primes as the right argument to `mod`.
 
+**See Issue #1**
+
+
 We can replicate with state the filtering of `ipf2`.
 
 ```q
