@@ -12,19 +12,24 @@ ipf2:{@[;where x in 2 5;:;1b] @[count[x]#0b;i;:;ipf1 x i:where(last 10 vs x)in 1
 ptf0:`s#{x except raze x*\:/:x}1_1+til@
 
 / Eratosthenes' sieve
-sieve:{n:1+y?1b;(x,n;y&count[y]#10b where(n-1),1)}.
-ptf1:{{x,1+where y}.{x>y[1]?1b}[floor sqrt x] sieve/(2;0b,1_x#10b)}
+sieve1:{p:1+y?1b;(x,p;y and count[y]##[p-1;1b],0b)}.
+sieve2:{n:1+y?1b;(x,n;@[y;1_-[;1]n*til 1+count[y]div n;:;0b])}.
+es:{[f;N] {x,1+where y}. {x>last y 0}[floor sqrt N;] f/(2;0b,"b"$(til N-1)mod 2)}
+ptf1:es[sieve2]
 
 
 / ## solutions with state
 
 / ### prime numbers to x
-KP:asc 2 3 5 7  / known primes
+KP:`s#2 3 5 7  / known primes
 PT:10           / to 10
 pts0:{$[x<=PT; KP where KP<=x; KP::`s#ptf1 PT::x]}
 
-ips1:{(x<>1)and not 0 in x mod pts0 floor sqrt x}'
-ips2:{@[;where x in 2 5;:;1b] @[count[x]#0b;i;:;ips1 x i:where(last 10 vs x)in 1 3 7 9]}
+/ ### is x prime?
+ips1:{(x<>1)and not 0 in x mod pts0 floor sqrt x}
+ips2:{@[;where x in 2 5;:;1b] @[count[x]#0b;i;:;ips1 each x i:where(last 10 vs x)in 1 3 7 9]}
+ips3:{@[;where x in 2 5;:;1b] ({0b};ips1)[0 1 0 1 0 0 0 1 0 1 last 10 vs x]@'x}
+ips4:{@[;where x in 2 5;:;1b] ({0b};ips1)[(last 10 vs x)in 1 3 7 9]@'x}
 
 /
 
