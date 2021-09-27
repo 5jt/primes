@@ -1,4 +1,4 @@
-ipf---
+---
 title: Finding primes
 description: Part I: Functional vector solutions in q for finding prime numbers
 authors:
@@ -6,13 +6,18 @@ authors:
     - Stephen Taylor
 date: September 2021
 ---
-# Finding primes 1: functional solutions 
+# Finding primes 1: functional solutions
 
 
 
 Finding prime numbers is a compute-intensive task familiar to computer-science students.
 It is typically tackled with tightly-iterating algorithms in a language close to the hardware, such as C.
 It appears an unrewarding task for a vector-programming language.
+
+We tackle this topic in order to study efficient vector solutions to a well-understood problem domain.
+
+
+## Background
 
 It is sometimes said that in Iversonian languages (programming languages derived from Iverson’s notation: e.g. APL, J, k, q) “iteration is free”. Operators and built-in functions iterate implicitly through arrays. They are supplemented by higher-order operators (iterators) that specify more elaborate iteration patterns such as converge, map-reduce and fold.  This has three important, but quite different consequences.
 
