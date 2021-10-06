@@ -5,7 +5,8 @@
 / ### is x prime?
 ipf0:{2=sum 0=x mod 1_ til 1+x}'
 ipf1:{(x<>1)and not 0 in x mod 2_til 1+floor sqrt x}'
-ipf2:{@[;where x in 2 5;:;1b] @[count[x]#0b;i;:;ipf1 x i:where(last 10 vs x)in 1 3 7 9]}
+ld:{last 10 vs x} / last digits
+ipf2:{@[;where x in 2 5;:;1b] @[count[x]#0b;i;:;ipf1 x i:where(ld x)in 1 3 7 9]}
 
 / ### prime numbers to x
 / simple but overcomputes
@@ -27,9 +28,9 @@ pts0:{$[x<=PT; KP where KP<=x; KP::`s#ptf1 PT::x]}
 
 / ### is x prime?
 ips1:{(x<>1)and not 0 in x mod pts0 floor sqrt x}
-ips2:{@[;where x in 2 5;:;1b] @[count[x]#0b;i;:;ips1 each x i:where(last 10 vs x)in 1 3 7 9]}
-ips3:{@[;where x in 2 5;:;1b] ({0b};ips1)[0 1 0 1 0 0 0 1 0 1 last 10 vs x]@'x}
-ips4:{@[;where x in 2 5;:;1b] ({0b};ips1)[(last 10 vs x)in 1 3 7 9]@'x}
+ips2:{@[;where x in 2 5;:;1b] @[count[x]#0b;i;:;ips1 each x i:where(ld x)in 1 3 7 9]}
+ips3:{@[;where x in 2 5;:;1b] ({0b};ips1)[0 1 0 1 0 0 0 1 0 1 ld x]@'x}
+ips4:{@[;where x in 2 5;:;1b] ({0b};ips1)[ld[x]in 1 3 7 9]@'x}
 
 /
 

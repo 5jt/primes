@@ -1,5 +1,5 @@
 ---
-title: Finding primes
+title: Finding and factorizing primes
 description: Functional vector solutions for finding and factorizing prime numbers
 authors:
     - Noah Attrup
@@ -17,4 +17,5 @@ It appears an unrewarding task for a vector-programming language.
 We tackle this topic in order to study efficient vector solutions to a well-understood problem domain.
 
 nattrup@kx.com
+
 stephen@kx.com

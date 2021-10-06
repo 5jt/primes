@@ -1,6 +1,6 @@
 ---
 title: Finding primes
-description: Part I: Functional vector solutions in q for finding prime numbers
+description: 'Part 1: Functional vector solutions in q for finding prime numbers'
 authors:
     - Noah Attrup
     - Stephen Taylor
@@ -12,21 +12,26 @@ date: September 2021
 
 Finding prime numbers is a compute-intensive task familiar to computer-science students.
 It is typically tackled with tightly-iterating algorithms in a language close to the hardware, such as C.
-It appears an unrewarding task for a vector-programming language.
 
-We tackle this topic in order to study efficient vector solutions to a well-understood problem domain.
+It might appear an unrewarding topic for a vector-programming language.
+We tackle it to study efficient vector solutions in a well-understood problem domain.
+A vector-programming notation helps us think clearly about an algorithm’s iteration.
+
+Part 1 of this article examines functional solutions to two questions:
+
+-   Is $x$ prime?
+-   What are the primes up to and including $N$?
+
+Subsequent parts will tackle prime factorization and stateful solutions.
 
 
 ## Background
 
-It is sometimes said that in Iversonian languages (programming languages derived from Iverson’s notation: e.g. APL, J, k, q) “iteration is free”. Operators and built-in functions iterate implicitly through arrays. They are supplemented by higher-order operators (iterators) that specify more elaborate iteration patterns such as converge, map-reduce and fold.  This has three important, but quite different consequences.
+It is sometimes said that in Iversonian languages (programming languages derived from Iverson’s notation: e.g. APL, J, k, q) “iteration is free”. Operators and built-in functions iterate implicitly through arrays. They are supplemented by higher-order operators (iterators) that specify more elaborate iteration patterns such as Converge, Map-reduce and Fold.  This has three important, but quite different consequences.
 
-The most obvious consequence is that the writer is relieved of the work of writing loops and can specify common patterns of iteration with one or two symbols.
-Code becomes terse. With iteration as subordinated detail the remaining parts of an algorithm become easier to see and study.
-
-Vectors correspond to machine architectures. Algorithms expressed in vectors are more tractable for parallelization. Higher levels of abstraction leave implementors more scope for optimization. This is the second consequence.
-
-The least-remarked consequence is that condensing an algorithm to a few terse lines helps the writer focus on the iteration that it implies or specifies. Arguably, thinking about iteration is easier in an Iversonian language.
+-   The most obvious consequence is that the writer is relieved of the work of writing loops and can specify common patterns of iteration with one or two symbols. Code becomes terse. With iteration as subordinated detail the remaining parts of an algorithm become easier to see and study.
+-   Vectors correspond to machine architectures. Algorithms expressed in vectors are more tractable for parallelization. Higher levels of abstraction leave implementors more scope for optimization. This is the second consequence.
+-   The least-remarked consequence is that condensing an algorithm to a few terse lines helps the writer focus on the iteration that is implied or specified. Thinking about iteration is easier in an Iversonian language.
 
 At the British APL Association’s 40th anniversary celebration at the Royal Society in London in 2004, implementor Arthur Whitney spoke of k code volumes being two orders of magnitude smaller than C:
 
@@ -120,7 +125,7 @@ The above illustrates an important development practice. Iversonian languages pi
 
 > Develop an algorithm by experiments in the REPL not on one but a _list_ of values.
 
-We can use the [Display](https://code.kx.com/q/ref/display/) operator to instrument our function and observe intermediate values.
+We can use the [Display](https://code.kx.com/q/ref/display/) operator (`0N!`) to instrument our function and observe intermediate values.
 
 ```q
 q){2=sum 0=x mod 0N!n x}R 0
@@ -163,7 +168,7 @@ q)\ts:1000 ipf1 each 1#R
 ```
 The other way we can shorten the right argument to `mod` is by including only prime numbers. 
 
-That suggests some circularity: primeness is what we are testing. It suggests both the possibility of a recursive solution, and also a stateful one. We shall return to these in Part II. 
+That suggests some circularity: primeness is what we are testing. It suggests both the possibility of a recursive solution, and also a stateful one. We shall return to these in Part 2. 
 
 But an efficient functional primes-to function might make a difference here. 
 We’ll return to this question after developing a $\pi$ function.
@@ -171,7 +176,7 @@ We’ll return to this question after developing a $\pi$ function.
 
 ### Fewer left arguments to `mod`
 
-We can also filter the left argument of `mod`. The value tested above is not prime. We can see that without `mod`, because an even number cannot be prime. Nor can a number ending in 5. Where `x` is above 10 we need test only values ending in 1, 3, 7, or 9.
+We can also filter the left argument of `mod`. The value tested above is not prime. We can see that without `mod`, because an even number cannot be prime. Nor can a number ending in 0 or 5. Where `x` is above 10 we need test only values ending in 1, 3, 7, or 9.
 
 ```q
 q)R
@@ -179,40 +184,42 @@ q)R
 ```
 
 Only four items of `R` require testing by `mod`. 
-We could iterate [Cond](https://code.kx.com/q/ref/cond/).
+We could iterate [Cond](https://code.kx.com/q/ref/cond/) (`$`).
 ```q
-q){$[last[10 vs x]in 1 3 7 9;ipf1 x;0b]}each R
+q)ld:last 10 vs   / last digit/s
+q){$[ld[x]in 1 3 7 9;ipf1 x;0b]}each R
 0000000110b
 ```
 But a dictionary will do the job faster.
 ```q
-q)@'[;R] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 last 10 vs R
+q)@'[;R] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 ld R
 0000000110b
 
-q)\ts:1000 {$[last[10 vs x]in 1 3 7 9;ipf1 x;0b]}each R
+q)\ts:1000 {$[ld[x]in 1 3 7 9;ipf1 x;0b]}each R
 101 132320
-q)\ts:1000 @'[;R] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 last 10 vs R
+q)\ts:1000 @'[;R] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 ld R
 61 132864
 ```
+Note above how tersely the values in `R` are mapped; by `ld` to their last digits; by the flag vector to 1s and 0s; finally to either `{0b}` or `ipf1`.
 
 Extend to small values of `x`:
 
 ```q
-q)ipf2:{@[;where x in 2 3 5 7;:;1b] @'[;x] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 last 10 vs x}
+q)ipf2:{@[;where x in 2 3 5 7;:;1b] @'[;x] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 ld x}
 q)\ts:1000 ipf1 R
 104 131664
 q)\ts:1000 ipf2 R
 64 133376
 ```
-Filtering suggests [Amend At](https://code.kx.com/q/ref/amend/) rather than a test in each iteration.
+Filtering suggests [Amend At](https://code.kx.com/q/ref/amend/) (`@`) rather than a test in each iteration.
 But saves us no time.
 ```q
-q)\ts:1000 @[;where R in 2 3 5 7;:;1b] @[count[R]#0b;i;:;ipf1 each R i:where(last 10 vs R)in 1 3 7 9]
+q)\ts:1000 @[;where R in 2 3 5 7;:;1b] @[count[R]#0b;i;:;ipf1 each R i:where(ld R)in 1 3 7 9]
 68 133248
 ```
 
 ### 
-We have unfinished business. If we had a function `pt` (‘primes to’) that returned primes less than its argument we could replace
+We have unfinished business. If we had a function `pt` (‘primes to’) that returned primes up to its argument we could replace
 ```q
 {(x<>1)and not 0 in x mod 1 _ n floor sqrt x}
 ```
@@ -241,7 +248,7 @@ q){x except raze x*/:\:x}1_i
 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97 101 10..
 ```
 
-This has the virtue of simplicity. By eliminating all multiples of all numbers below `x` the algorithm is obviously correct. But it generates even more composite numbers above `x` than below, and there is a price.
+This has the virtue of simplicity. By eliminating all multiples of all numbers below `x` the algorithm is obviously correct. But it generates even more composite numbers above `x` than below, and there is a price for that.
 
 ```q
 q)\ts i where ipf2 i
@@ -325,13 +332,13 @@ q)see s:s and 100#10b where((0N!1+s?1b)-1),1
           97
 ```
 We can stop here. The next prime, 11, exceeds the square root of 100.
-There are no more numbers to eliminate. We found the primes 2 3 5 7, and whatever remains in the sieve.
+There are no more numbers to eliminate. We found the primes 2 3 5 7 – and whatever else remains in the sieve.
 ```q
 q)2 3 5 7,1+where s
 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97
 ```
 
-The iteration above fits the [While](https://code.kx.com/q/ref/accumulators#while) pattern.
+The iteration above fits the [While](https://code.kx.com/q/ref/accumulators#while) iterator pattern.
 
 We begin with a pair of lists: known primes and the sieve flagging the candidates. 
 We might start with 2 and the odd numbers as candidates.
@@ -349,7 +356,8 @@ q){n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)}. is
 2 3
 00001010001010001010001010001010001010001010001010001010001010001010001010001..
 ```
-Note the projection of [Apply](https://code.kx.com/q/ref/apply/). It lets the lambda refer to the pair items simply as `x` and `y`.
+Note the projection of [Apply](https://code.kx.com/q/ref/apply/) (`.`). 
+It lets the lambda refer to the pair items simply as `x` and `y`.
 ```q
 q)sieve:{n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)}.
 q)3 sieve\is  / the Do iterator
@@ -360,7 +368,7 @@ q)3 sieve\is  / the Do iterator
 ```
 When to stop? 
 
-We could stop sieving when we run out of 1s. For that we have the [Converge](https://code.kx.com/q/ref/accumulators/#converge) iterator.
+We could stop sieving when we run out of 1s. For that we have the [Converge](https://code.kx.com/q/ref/accumulators/#converge) iterator (`\` or`/`).
 ```q
 q)({$[any y;[n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)];(x;y)]}.)\ [is]
 2                                                             001010101010101..
@@ -408,7 +416,7 @@ The test function `{any z#y}[;;floor sqrt N]` checks whether all the candidates 
 Projecting a ternary lambda on `floor sqrt N` binds the test to the square-root. 
 The algorithm has just one arithmetic calculation, and it does it just once.
 
-Finally `{x,1+where y}.` combines the list of found primes and the bitmask. 
+Finally `{x,1+where y}.` combines the pair: the found primes and the bitmask. 
 ```q
 q)es[sieve1] 100
 2 3 4 5 7 11 13 17 19 22 23 26 29 31 34 37 38 41 43 46 47 53 58 59 61 62 67 71 73 74 79 82 83 86 89 94 97
@@ -416,7 +424,7 @@ q)es[sieve1] 100
 Studying `sieve1`, we see each iteration performs an AND between two bitmasks. 
 This looks like another array-language ‘overcompute’. 
 We actually only need to set certain indexes to false. 
-That suggests a sieve that uses [Amend](https://code.kx.com/q/ref/amend/). 
+That suggests a sieve that uses [Amend At](https://code.kx.com/q/ref/amend/) (`@`). 
 Which is faster? 
 
 * calculate the indexes and amend at them
@@ -432,7 +440,7 @@ q)\ts:100 es[sieve1;X]
 q)\ts:100 es[sieve2;X]
 3597 18875088
 ```
-A solid win for Amend over `and`? Not quite: `sieve1` runs faster for smaller values of `X`, and only falls behind with `X` at a million or more.
+A solid win for Amend At over `and`? Not quite: `sieve1` runs faster for smaller values of `X`, and only falls behind with `X` at a million or more.
 But `sieve2` works better for the Project Euler challenge.
 
 ```q
@@ -458,10 +466,10 @@ Recall when testing for primeness we saw the possibility of replacing `x mod 1_ 
 Perhaps it’s faster to find the primes than to calculate the `mod`s with non-primes?
 ```q
 ipf1:{(x<>1)and not 0 in x mod 1 _ n floor sqrt x}
-ipf2:{@[;where x in 2 3 5 7;:;1b] @'[;x] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 last 10 vs x}
+ipf2:{@[;where x in 2 3 5 7;:;1b] @'[;x] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 ld x}
 
 ipf3:{(x<>1)and not 0 in x mod 1 _ ptf1 floor sqrt x}
-ipf4:{@[;where x in 2 3 5 7;:;1b] @'[;x] ({0b};ipf3)0 1 0 1 0 0 0 1 0 1 last 10 vs x}
+ipf4:{@[;where x in 2 3 5 7;:;1b] @'[;x] ({0b};ipf3)0 1 0 1 0 0 0 1 0 1 ld x}
 ```
 ```q
 q)\ts:10000 ipf2 R
