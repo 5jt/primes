@@ -15,8 +15,30 @@ ptf0:`s#{x except raze x*\:/:x}1_1+til@
 / Eratosthenes' sieve
 sieve1:{p:1+y?1b;(x,p;y and count[y]##[p-1;1b],0b)}.
 sieve2:{n:1+y?1b;(x,n;@[y;1_-[;1]n*til 1+count[y]div n;:;0b])}.
-es:{[f;N] {x,1+where y}. {x>last y 0}[floor sqrt N;] f/(2;0b,"b"$(til N-1)mod 2)}
+es:{[f;N] `s#{x,1+where y}. {x>last y 0}[floor sqrt N;] f/(2;0b,"b"$(til N-1)mod 2)}
 ptf1:es[sieve2]
+
+/ ### prime factors of x
+/ trial division https://en.wikipedia.org/wiki/Trial_division
+can0:{2 _ til ceiling sqrt x}      / candidate factors
+can1:{ptf1 ceiling sqrt x}         / candidate factors
+can2:{c where 0=x mod c:can1 x}    / candidate factors
+try0:{[can;N]
+  is:(N;can N;0#0); / initial state
+  try:{$[x=1;(x;y;z);x mod n:y 0;(x;1 _ y;z);(x div n;y;z,n)]}; 
+  {x 2}. .[try]/[is] }
+try1:{[can;N]
+  is:(N;0;0#0); / initial state: number; index; result (factors)
+  try:{[c;n;i;r]$[n=1;(n;i;r); n mod f:c i; (n;i+1;r);(n div f;i;r,f)]}[can N]; 
+  {x 2} .[try]/[is] }
+pff0:try1[can0]
+pff1:try1[can1]
+pff2:try1[can2]
+pff3:{[N]
+  cf:cf where 0=N mod cf:ptf1 ceiling sqrt N; / candidate factors
+  try:{[c;n;i;r]$[n=1;(n;i;r); n mod f:c i; (n;i+1;r);(n div f;i;r,f)]}[cf]; 
+  $[count cf; {x 2} .[try]/[(N;0;0#0)] ; cf] }
+
 
 
 / ## solutions with state
