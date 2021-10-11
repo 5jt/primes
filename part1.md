@@ -1,12 +1,12 @@
 ---
 title: 'Finding primes'
-description: 'Part 1: Functional vector solutions in q for finding prime numbers'
+description: 'Part 1: How to develop efficient vector solutions for finding and testing primes'
 authors:
     - Noah Attrup
     - Stephen Taylor
 date: September 2021
 ---
-# Finding primes 1: functional solutions
+# Finding primes 1: functional q solutions
 
 
 
@@ -14,31 +14,35 @@ Finding prime numbers is a compute-intensive task familiar to computer-science s
 It is typically tackled with tightly-iterating algorithms in a language close to the hardware, such as C.
 
 It might appear an unrewarding topic for a vector-programming language.
-We tackle it to study efficient vector solutions in a well-understood problem domain.
-A vector-programming notation helps us think clearly about an algorithm’s iteration.
+We explore it here to study efficient vector solutions in a well-understood problem domain.
+We are interested not so much in the solutions themselves, but in the *process of developing them*, which we illustrate.
 
-Part 1 of this article examines functional solutions to two questions:
+The q language handles large data tables efficiently, and supports coders familiar with SQL. 
+It is easy to overlook the vector handling on which its power is based, and the direct access to it that the language affords.
+We hope our account will be of value to q developers who want to deepen their vector-programming skills. 
+
+Part 1 of this article examines functional solutions to two familiar questions:
 
 -   Is $x$ prime?
 -   What are the primes up to and including $N$?
 
-Subsequent parts will tackle prime factorization and stateful solutions.
+Subsequent parts will explore prime factorization and stateful solutions.
 
 
 ## Background
 
-It is sometimes said that in Iversonian languages (programming languages derived from Iverson’s notation: e.g. APL, J, k, q) “iteration is free”. Operators and built-in functions iterate implicitly through arrays. They are supplemented by higher-order operators (iterators) that specify more elaborate iteration patterns such as Converge, Map-reduce and Fold.  This has three important, but quite different consequences.
+It is sometimes said that in programming languages derived from Iverson’s notation (e.g. APL, J, k, q) “iteration is free”. Operators and built-in functions iterate implicitly through arrays. They are supplemented by higher-order operators that specify more elaborate iteration patterns such as Converge, Map-reduce and Fold.  This has three important, but quite different consequences.
 
--   The most obvious consequence is that the writer is relieved of the work of writing loops and can specify common patterns of iteration with one or two symbols. Code becomes terse. With iteration as subordinated detail the remaining parts of an algorithm become easier to see and study.
--   Vectors correspond to machine architectures. Algorithms expressed in vectors are more tractable for parallelization. Higher levels of abstraction leave implementors more scope for optimization. This is the second consequence.
--   The least-remarked consequence is that condensing an algorithm to a few terse lines helps the writer focus on the iteration that is implied or specified. Thinking about iteration is easier in an Iversonian language.
+-   The writer is relieved of the work of writing loops and can specify common patterns of iteration with one or two symbols. With iteration as subordinated detail the remaining parts of an algorithm are easier to study.
+-   Vectors correspond to machine architectures. Algorithms expressed in vectors are more tractable for parallelization. Higher levels of abstraction leave implementors more scope for optimization. 
+-   Condensing an algorithm to a few lines helps to focus on the iteration, implied or specified. Thinking about iteration is easier in an Iversonian language.
 
 At the British APL Association’s 40th anniversary celebration at the Royal Society in London in 2004, implementor Arthur Whitney spoke of k code volumes being two orders of magnitude smaller than C:
 
 > It is theoretically impossible for a k program to outperform hand-coded C, because every k program compiles to a C program that is exactly as fast. Yet k programs routinely outperform hand-coded C. How is this possible? It’s because it is a lot easier to see your errors in four lines of k than in 400 lines of C.
 
 The world does not need new prime numbers, nor even code for finding them.
-We offer this article as a close study of efficient vector solutions to problems more usually tackled with less abstract languages. We take the most elementary problems with primes:
+We offer this article as a close study of developing efficient vector solutions to problems more usually tackled with less abstract languages. We take the most elementary problems with primes:
 
 -   Is `x` prime?
 -   What are the prime numbers up to and including `x`? (In mathematics, this is the $\pi$ function.)
@@ -46,8 +50,10 @@ We offer this article as a close study of efficient vector solutions to problems
 
 Functional Programming was born from the first Iversonian language, APL, so we begin with purely functional solutions.
 
-No atoms: `x` will always be a vector of ints.
+The [q Reference](https://code.kx.com/q/ref) is a useful companion to this work.
 
+<!-- No atoms: `x` will always be a vector of ints.
+ -->
 
 ## Is `x` prime?
 
@@ -60,6 +66,7 @@ q)n:1+til@ / first x natural numbers
 q)show i:n 20
 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 ```
+Above, `n` is defined as a composition of the unary projection `1+` and the unary keyword `til`, equivalent to `{1+til x}`.
 
 Every number is divisible by itself and 1. What other positive divisors _might_ it have?
 
@@ -94,6 +101,8 @@ q)(i; 2=sum each 0=i mod n each i)
 Above we exploited the iteration implicit in Equal and `mod`, but had to use `each` to iterate `sum` and `n`. 
 Would we do better with a lambda and a single iterator?
 
+The command `\ts` lets us compare execution time and memory use of the two expressions. We have ideas about what is likely to be efficient; this is a reality check. Run each a thousand times.
+
 ```q
 q)\ts:1000 2=sum each 0=i mod n each i
 23 13568
@@ -121,11 +130,16 @@ q)ipf0 R
 0000000110b
 ```
 
-The above illustrates an important development practice. Iversonian languages pioneered the [REPL](https://en.wikipedia.org/wiki/REPL "Wikipedia").
+The above illustrates an important development practice. 
+(Iversonian languages pioneered the [REPL](https://en.wikipedia.org/wiki/REPL "Wikipedia: Read–eval–print loop").)
 
 > Develop an algorithm by experiments in the REPL not on one but a _list_ of values.
 
-We can use the [Display](https://code.kx.com/q/ref/display/) operator (`0N!`) to instrument our function and observe intermediate values.
+If we were using formal software-development methods, we would have started by writing a suite of tests.
+Our informal equivalent is to experiment with a list of values.
+This is sometimes called *exploratory programming*.
+
+We can use the [Display](https://code.kx.com/q/ref/display/) operator `0N!` to instrument our function and observe intermediate values.
 
 ```q
 q){2=sum 0=x mod 0N!n x}R 0
@@ -167,7 +181,7 @@ q)\ts:1000 ipf1 each 1#R
 
 The other way we can shorten the right argument to `mod` is by including only prime numbers. 
 
-That suggests some circularity: primeness is what we are testing. It suggests both the possibility of a recursive solution, and also a stateful one. We shall return to these in Part 2. 
+That suggests some circularity: primality is what we are testing! It suggests the possibility of a stateful solution. We shall return to this in later parts of the article. 
 
 But an efficient functional primes-to function might make a difference here. 
 We’ll return to this question after developing a $\pi$ function.
@@ -175,7 +189,7 @@ We’ll return to this question after developing a $\pi$ function.
 
 ### Fewer left arguments to `mod`
 
-We can also filter the left argument of `mod`. The value tested above is not prime. We can see that without `mod`, because an even number cannot be prime. Nor can a number ending in 0 or 5. Where `x` is above 10 we need test only values ending in 1, 3, 7, or 9.
+We can also filter the left argument of `mod`. The value tested above is not prime. We can see that without using `mod`, because an even number cannot be prime; nor a number ending in 5. Where `x` is above 10 we need test only values ending in 1, 3, 7, or 9.
 
 ```q
 q)R
@@ -183,7 +197,7 @@ q)R
 ```
 
 Only four items of `R` require testing by `mod`. 
-We could iterate [Cond](https://code.kx.com/q/ref/cond/) (`$`).
+We could iterate [Cond](https://code.kx.com/q/ref/cond/) `$`.
 
 ```q
 q)ld:last 10 vs   / last digit/s
@@ -191,7 +205,7 @@ q){$[ld[x]in 1 3 7 9;ipf1 x;0b]}each R
 0000000110b
 ```
 
-But a dictionary will do the job faster.
+But lists will do the job faster.
 
 ```q
 q)@'[;R] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 ld R
@@ -203,7 +217,24 @@ q)\ts:1000 @'[;R] ({0b};ipf1)0 1 0 1 0 0 0 1 0 1 ld R
 61 132864
 ```
 
-Note above how tersely the values in `R` are mapped; by `ld` to their last digits; by the flag vector to 1s and 0s; finally to either `{0b}` or `ipf1`.
+Note above how tersely the values in `R` are mapped; by `ld` to their last digits; by the flag vector to 1s and 0s; finally to either `{0b}` or `ipf1`. (The projection `@'[;R]` allows us to avoid writing `...@'R` with a long left argument.)
+
+Just for contrast, consider the same algorithm in pseudo-code.
+
+```
+for-each( n in R ){
+	switch( ld(n) ) {
+	caselist 1 3 5 7:
+		return ipf1(n);
+		break;
+	default:
+		return false;
+		break;
+	}
+}
+```
+
+Nothing forbidding in that, but the q REPL lets us in one line edit the algorithm and test it on a list of values. 
 
 Extend to small values of `x`:
 
@@ -223,7 +254,7 @@ q)\ts:1000 @[;where R in 2 3 5 7;:;1b] @[count[R]#0b;i;:;ipf1 each R i:where(ld 
 68 133248
 ```
 
-We have unfinished business. If we had a function `pt` (‘primes to’) that returned primes up to its argument we could replace
+We have unfinished business. If we had a $\pi$ function `pt` (‘primes to’) that returned primes up to its argument we could replace
 
 ```q
 {(x<>1)and not 0 in x mod 1 _ n floor sqrt x}
@@ -243,7 +274,7 @@ So we turn now to our second task, the $\pi$ function, finding the primes up to 
 ## Primes to `x` – the $\pi$ function
 
 Our first solution is: select the prime numbers from `n X`.
-And we have a test function just written.
+With a test function already written, we can separate primes from composite numbers.
 
 ```q
 q)X:1000
@@ -251,7 +282,7 @@ q)i where ipf2 i:n X
 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97 101 10..
 ```
 
-Another simple strategy is to eliminate all the composite numbers.
+Another simple strategy is to generate all the composite numbers and eliminate them.
 
 ```q
 q){x except raze x*/:\:x}1_i
@@ -275,9 +306,12 @@ q)ptf0 100
 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97
 ```
 
+The definition of `ptf0` above uses `@` to compose two unary functions: the lambda and `n`. 
+It follows a pattern in which with unaries `u` and `v`, `u v@` is equivalent to `{u v x}`.
+
 A quite different strategy is the [Sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes "Wikipedia"), which does no arithmetic at all. As we discover primes, we eliminate their multiples from the candidates. 
 
-To find the primes below 100 flag the candidates.
+To find the primes below 100, flag the candidates.
 Start by eliminating 1 and the even numbers.
 
 ```q
@@ -285,7 +319,7 @@ q)show s:0b,99#01b
 00101010101010101010101010101010101010101010101010101010101010101010101010101..
 ```
 
-For convenience, display the candidates as a matrix.
+For convenience, visualize the candidates as a matrix.
 
 ```q
 q)see:{10 cut ?[x;1+til count x;0N]}
@@ -301,6 +335,8 @@ q)see s
 81  83  85  87  89
 91  93  95  97  99
 ```
+
+Above, the ternary operator `?` is [Vector Conditional](https://code.kx.com/q/ref/vector-conditional/).
 
 The first listed candidate is always prime.
 
@@ -358,9 +394,9 @@ q)2 3 5 7,1+where s
 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97
 ```
 
-The iteration above fits the [While](https://code.kx.com/q/ref/accumulators#while) iterator pattern.
+The iteration above fits the [While](https://code.kx.com/q/ref/accumulators#while) iterator pattern. The Converge, Do, and While iterators apply to unary functions, so we represent state as a list: the unary returns a new list for the next iteration.
 
-We begin with a pair of lists: known primes and the sieve flagging the candidates. 
+Our state is a pair of lists: known primes, and the sieve flagging the candidates. 
 We might start with 2 and the odd numbers as candidates.
 
 ```q
@@ -378,8 +414,8 @@ q){n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)}. is
 00001010001010001010001010001010001010001010001010001010001010001010001010001..
 ```
 
-Note the projection of [Apply](https://code.kx.com/q/ref/apply/) (`.`). 
-It lets the lambda refer to the pair items simply as `x` and `y`.
+Note the projection of [Apply](https://code.kx.com/q/ref/apply/) `.`, which lets the lambda refer to the pair items simply as `x` and `y`.
+Here the [Do](https://code.kx.com/q/ref/accumulators#do) iterator `\` applies it three times, returning the results of 0, 1, 2, and 3 iterations.
 
 ```q
 q)sieve:{n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)}.
@@ -392,10 +428,10 @@ q)3 sieve\is  / the Do iterator
 
 When to stop? 
 
-We could stop sieving when we run out of 1s. For that we have the [Converge](https://code.kx.com/q/ref/accumulators/#converge) iterator (`\` or`/`).
+We could stop sieving when we run out of 1s. For that we have the [Converge](https://code.kx.com/q/ref/accumulators/#converge) iterator, `\` or`/`.
 
 ```q
-q)({$[any y;[n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)];(x;y)]}.)\ [is]
+q).[{$[any y;[n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)];(x;y)]}]\ [is]
 2                                                             001010101010101..
 2 3                                                           000010100010100..
 2 3 5                                                         000000100010100..
@@ -424,6 +460,8 @@ But we don’t need all these iterations! We can stop when we have found 2, 3, 5
 By then we have eliminated multiples of all the numbers up to the square root of `X`.
 Any remaining 1s in the list mark primes.
 
+Here we use the [While](https://code.kx.com/q/ref/accumulators#while) iterator with `{any z#y}[;;10].` as the test function.
+
 ```q
 q)({any z#y}[;;10].)({n:1+y?1b;(x,n;y and count[y]#10b where(n-1),1)}.)\ is
 2       001010101010101010101010101010101010101010101010101010101010101010101..
@@ -444,7 +482,7 @@ In `es`, `N` is the number up to which to find primes, and `s` is the sieve func
 
 The test function `{any z#y}[;;floor sqrt N]` checks whether all the candidates up to the square root of `N` have been eliminated. 
 Projecting a ternary lambda on `floor sqrt N` binds the test to the square-root. 
-The algorithm has just one arithmetic calculation, and it does it just once.
+(The algorithm has just one arithmetic calculation, and it does it just once.)
 
 Finally `{x,1+where y}.` combines the pair: the found primes and the bitmask. 
 
@@ -456,7 +494,7 @@ q)es[sieve1] 100
 Studying `sieve1`, we see each iteration performs an AND between two bitmasks. 
 This looks like another array-language ‘overcompute’. 
 We actually only need to set certain indexes to false. 
-That suggests a sieve that uses [Amend At](https://code.kx.com/q/ref/amend/) (`@`). 
+That suggests a sieve that uses [Amend At](https://code.kx.com/q/ref/amend/) `@`. 
 Which is faster? 
 
 * calculate the indexes and amend at them
@@ -496,7 +534,7 @@ Eratosthenes wins by two orders of magnitude.
 ## The test revisited
 
 Now we have an efficient $\pi$ function, can we use it to improve our test, by using only primes as the right argument of `mod`?
-Recall when testing for primeness we saw the possibility of replacing `x mod 1_ n floor sqrt x` with `x mod 1_ pt floor sqrt x`, where `pt` is the $\pi$ or primes-to function. 
+Recall when testing for primality we saw the possibility of replacing `x mod 1_ n floor sqrt x` with `x mod 1_ pt floor sqrt x`, where `pt` is the $\pi$ or primes-to function. 
 Perhaps it’s faster to find the primes than to calculate the `mod`s with non-primes?
 
 ```q
@@ -517,11 +555,17 @@ q)\ts:10000 ipf4 R
 No such luck.
 But perhaps, if we did not have to compute the result of $\pi \sqrt{N}$ for each test? 
 If we knew all the primes up to two million?
+We shall revisit this when we look at stateful solutions.
 
 ## Conclusion
 
-How far have we got? We have functional answers to the questions *Is $x$ prime?* and *What are the primes up to $N$?* For the former we saved time by making tests smarter. We used the smarter tests to identify primes up to $N$ but found Eratosthenes’s Sieve faster by two orders of magnitude. 
+How far have we got? We have functional answers to the questions *Is $x$ prime?* and *What are the primes up to $N$?* For the former we saved time by making tests smarter. We used the smarter tests to identify primes up to $N$ but found Eratosthenes’s sieve faster by two orders of magnitude. 
 
-We achieved all this without a single control-flow construct: our vector solutions exploit machine architectures. And the resulting code occupies a handful of lines and imports no libraries.
+We achieved all this without a single control-flow construct, and our vector solutions exploit machine architectures well. The resulting code occupies a handful of lines and imports no libraries.
 
 In the next parts of this article we shall look at prime decomposition, and at how our functional solutions can be improved with state.
+
+## Acknowledgements
+
+Our thanks to Ferenć Bodon, Geo Carncross, and Rian Ó’Cuinneagáin for reviewing earlier versions of this work. 
+Any remaining errors are of course ours. 
