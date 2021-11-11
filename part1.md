@@ -4,7 +4,7 @@ description: 'Finding primes is a simple task with well-understood solutions. We
 authors:
     - Noah Attrup
     - Stephen Taylor
-date: September 2021
+date: November 2021
 ---
 # Finding primes with q
 
@@ -35,10 +35,10 @@ Subsequent parts will explore prime factorization and stateful solutions.
 
 ## Background
 
-It is sometimes said that in programming languages derived from Iverson’s notation (e.g. APL, J, k, q) “iteration is free”. Operators and built-in functions iterate implicitly through arrays. They are supplemented by higher-order operators that specify more elaborate iteration patterns such as Converge, Map-reduce and Fold.  This has three important, but quite different consequences.
+It is sometimes said that in programming languages derived from Iverson’s notation (e.g. APL, J, k, q) “iteration is free”. Operators and built-in functions iterate implicitly through arrays. They are supplemented by higher-order operators that specify more elaborate iteration patterns such as Converge, Map-reduce and Fold.  This has three related, but quite different consequences.
 
 -   The writer is relieved of the work of writing loops and can specify common patterns of iteration with one or two symbols. With iteration as subordinated detail the remaining parts of an algorithm are easier to study.
--   Vectors correspond to machine architectures. Algorithms expressed in vectors are more tractable for parallelization. Higher levels of abstraction leave implementors more scope for optimization. 
+-   Because vectors correspond to machine architectures, algorithms expressed in vectors are more tractable for parallelization. Higher levels of abstraction leave implementors more scope for optimization. 
 -   Condensing an algorithm to a few lines helps to focus on the iteration, implied or specified. Thinking about iteration is easier in an Iversonian language.
 
 At the British APL Association’s 40th anniversary celebration at the Royal Society in London in 2004, implementor Arthur Whitney spoke of k code volumes being two orders of magnitude smaller than C:
@@ -485,7 +485,7 @@ In `es`, `N` is the number up to which to find primes, and `s` is the sieve func
 (We shall compare some alternatives.)
 
 The test function `{any z#y}[;;floor sqrt N]` checks whether all the candidates up to the square root of `N` have been eliminated. 
-Projecting a ternary lambda on `floor sqrt N` binds the test to the square-root. 
+Projecting a ternary lambda on `floor sqrt N` binds the test to the square root. 
 (The algorithm has just one arithmetic calculation, and evaluates it just once.)
 
 Finally `{x,1+where y}.` combines the pair: the found primes and the bitmask. 
@@ -584,4 +584,4 @@ In the next parts of this article we shall look at prime decomposition, and at h
 ## Acknowledgements
 
 Our thanks to Ferenć Bodon, Geo Carncross, and Rian Ó’Cuinneagáin for reviewing earlier versions of this work. 
-Any remaining errors are of course ours. 
+Any remaining errors we jealously claim as ours. 
