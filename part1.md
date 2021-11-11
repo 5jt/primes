@@ -6,9 +6,12 @@ authors:
     - Stephen Taylor
 date: September 2021
 ---
-# Finding primes 1: functional q solutions
+# Finding primes 
+## Part 1: functional q solutions
 
+![prime numbers](./_prime-numbers.jpg)
 
+by Noah Attrup & Stephen Taylor
 
 Finding prime numbers is a compute-intensive task familiar to computer-science students.
 It is typically tackled with tightly-iterating algorithms in a language close to the hardware, such as C.
@@ -23,8 +26,8 @@ We hope our account will be of value to q developers who want to deepen their ve
 
 Part 1 of this article examines functional solutions to two familiar questions:
 
--   Is $x$ prime?
--   What are the primes up to and including $N$?
+-   Is _x_ prime?
+-   What are the primes up to and including _N_?
 
 Subsequent parts will explore prime factorization and stateful solutions.
 
@@ -44,9 +47,9 @@ At the British APL Association’s 40th anniversary celebration at the Royal Soc
 The world does not need new prime numbers, nor even code for finding them.
 We offer this article as a close study of developing efficient vector solutions to problems more usually tackled with less abstract languages. We take the most elementary problems with primes:
 
--   Is `x` prime?
--   What are the prime numbers up to and including `x`? (In mathematics, this is the $\pi$ function.)
--   What are the prime factors of `x`?
+-   Is _X_ prime?
+-   What are the prime numbers up to and including _X_? 
+-   What are the prime factors of _X_?
 
 Functional Programming was born from the first Iversonian language, APL, so we begin with purely functional solutions.
 
@@ -55,7 +58,7 @@ The [q Reference](https://code.kx.com/q/ref) is a useful companion to this work.
 <!-- No atoms: `x` will always be a vector of ints.
  -->
 
-## Is `x` prime?
+## Is X prime?
 
 > A number is prime if it has exactly two positive divisors: itself and 1.
 
@@ -122,7 +125,7 @@ q)\ts {2=sum 0=x mod n x}each R
 476 536871952
 ```
 
-That gives us our first functional version of _Is `x` prime?_.
+That gives us our first functional version of _Is X prime?_.
 
 ```q
 q)ipf0:{2=sum 0=x mod n x}'
@@ -149,9 +152,9 @@ q){2=sum 0=x mod 0N!n x}R 0
 
 ### Fewer right arguments to `mod`
 
-That’s a long right argument to `mod`. We can reduce it in two ways.
+That’s a long right argument to `mod`. We can shorten it in two ways.
 
-First, if `x` has any divisors, any larger than its square root must be paired with another smaller than its square root. If we find no divisors in `n floor sqrt X`, then `X` is prime.
+First, if `X` has any divisors, any larger than its square root must be paired with another smaller than its square root. If we find no divisors in `n floor sqrt X`, then `X` is prime.
 
 ```q
 q)(i; {not 0 in x mod 1 _ n floor sqrt x}each i)
@@ -184,7 +187,7 @@ The other way we can shorten the right argument to `mod` is by including only pr
 That suggests some circularity: primality is what we are testing! It suggests the possibility of a stateful solution. We shall return to this in later parts of the article. 
 
 But an efficient functional primes-to function might make a difference here. 
-We’ll return to this question after developing a $\pi$ function.
+We’ll return to this question after developing one.
 
 
 ### Fewer left arguments to `mod`
@@ -221,16 +224,16 @@ Note above how tersely the values in `R` are mapped; by `ld` to their last digit
 
 Just for contrast, consider the same algorithm in pseudo-code.
 
-```
+```c
 for-each( n in R ){
-	switch( ld(n) ) {
-	caselist 1 3 5 7:
-		return ipf1(n);
-		break;
-	default:
-		return false;
-		break;
-	}
+    switch( ld(n) ) {
+    caselist 1 3 5 7:
+        return ipf1(n);
+        break;
+    default:
+        return false;
+        break;
+    }
 }
 ```
 
@@ -254,7 +257,7 @@ q)\ts:1000 @[;where R in 2 3 5 7;:;1b] @[count[R]#0b;i;:;ipf1 each R i:where(ld 
 68 133248
 ```
 
-We have unfinished business. If we had a $\pi$ function `pt` (‘primes to’) that returned primes up to its argument we could replace
+We have unfinished business. If we had a `pt` (‘primes to’) function that returned primes up to its argument we could replace
 
 ```q
 {(x<>1)and not 0 in x mod 1 _ n floor sqrt x}
@@ -263,15 +266,15 @@ We have unfinished business. If we had a $\pi$ function `pt` (‘primes to’) t
 with 
 
 ```q
-{(x<>1)and not 0 in x mod 1 _ pt floor sqrt x}'
+{(x<>1)and not 0 in x mod 1 _ pt floor sqrt x}
 ```
 
-and reduce the right argument to `mod`.
+and shorten the right argument to `mod`.
 
-So we turn now to our second task, the $\pi$ function, finding the primes up to `x`.
+So we turn now to our second task, the `pt` function: finding the primes up to `x`.
 
 
-## Primes to `x` – the $\pi$ function
+## Primes to X
 
 Our first solution is: select the prime numbers from `n X`.
 With a test function already written, we can separate primes from composite numbers.
@@ -307,7 +310,7 @@ q)ptf0 100
 ```
 
 The definition of `ptf0` above uses `@` to compose two unary functions: the lambda and `n`. 
-It follows a pattern in which with unaries `u` and `v`, `u v@` is equivalent to `{u v x}`.
+It follows a pattern in which if `u` and `v` are unaries, `u v@` is equivalent to `{u v x}`.
 
 A quite different strategy is the [Sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes "Wikipedia"), which does no arithmetic at all. As we discover primes, we eliminate their multiples from the candidates. 
 
@@ -360,6 +363,7 @@ q)see s:s and 100#10b where((0N!1+s?1b)-1),1
 71  73      77  79
     83  85      89
 91      95  97
+
 q)see s:s and 100#10b where((0N!1+s?1b)-1),1
 5
           7
@@ -372,6 +376,7 @@ q)see s:s and 100#10b where((0N!1+s?1b)-1),1
 71  73    77  79
     83        89
 91        97
+
 q)see s:s and 100#10b where((0N!1+s?1b)-1),1
 7
 
@@ -482,7 +487,7 @@ In `es`, `N` is the number up to which to find primes, and `s` is the sieve func
 
 The test function `{any z#y}[;;floor sqrt N]` checks whether all the candidates up to the square root of `N` have been eliminated. 
 Projecting a ternary lambda on `floor sqrt N` binds the test to the square-root. 
-(The algorithm has just one arithmetic calculation, and it does it just once.)
+(The algorithm has just one arithmetic calculation, and evaluates it just once.)
 
 Finally `{x,1+where y}.` combines the pair: the found primes and the bitmask. 
 
@@ -533,8 +538,20 @@ Eratosthenes wins by two orders of magnitude.
 
 ## The test revisited
 
-Now we have an efficient $\pi$ function, can we use it to improve our test, by using only primes as the right argument of `mod`?
-Recall when testing for primality we saw the possibility of replacing `x mod 1_ n floor sqrt x` with `x mod 1_ pt floor sqrt x`, where `pt` is the $\pi$ or primes-to function. 
+Now we have an efficient *primes-to* function, can we use it to improve our test, by using only primes as the right argument of `mod`?
+Recall when testing for primality we saw the possibility of replacing 
+
+```q
+x mod 1_ n floor sqrt x
+```
+
+with 
+
+```q
+x mod 1_ pt floor sqrt x
+```
+
+where `pt` is the primes-to function. 
 Perhaps it’s faster to find the primes than to calculate the `mod`s with non-primes?
 
 ```q
@@ -553,13 +570,13 @@ q)\ts:10000 ipf4 R
 ```
 
 No such luck.
-But perhaps, if we did not have to compute the result of $\pi \sqrt{N}$ for each test? 
+But perhaps, if we did not have to compute the result of `pt sqrt N` for each test? 
 If we knew all the primes up to two million?
 We shall revisit this when we look at stateful solutions.
 
 ## Conclusion
 
-How far have we got? We have functional answers to the questions *Is $x$ prime?* and *What are the primes up to $N$?* For the former we saved time by making tests smarter. We used the smarter tests to identify primes up to $N$ but found Eratosthenes’s sieve faster by two orders of magnitude. 
+How far have we got? We have functional answers to the questions *Is X prime?* and *What are the primes up to N?* For the former we saved time by making tests smarter. We used the smarter tests to identify primes up to $N$ but found Eratosthenes’s sieve faster by two orders of magnitude. 
 
 We achieved all this without a single control-flow construct, and our vector solutions exploit machine architectures well. The resulting code occupies a handful of lines and imports no libraries.
 
