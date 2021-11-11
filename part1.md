@@ -1,17 +1,18 @@
 ---
-title: 'Finding primes'
-description: 'Part 1: How to develop efficient vector solutions for finding and testing primes'
+title: 'Finding primes with q
+description: 'Finding primes is a simple task with well-understood solutions. We use it for a close study of vector-programming techniques in q, with particular attention to the iteration operators. Part 1 develops purely functional solutions.'
 authors:
     - Noah Attrup
     - Stephen Taylor
 date: September 2021
 ---
-# Finding primes 
-## Part 1: functional q solutions
+# Finding primes with q
 
 ![prime numbers](./_prime-numbers.jpg)
 
-by Noah Attrup & Stephen Taylor
+## Part 1: Functional solutions
+
+<p style="text-align: right">by <a href="mailto:nattrup@kx.com">Noah Attrup</a> &amp; <a href="mailto:stephen@kx.com">Stephen Taylor</a></p>
 
 Finding prime numbers is a compute-intensive task familiar to computer-science students.
 It is typically tackled with tightly-iterating algorithms in a language close to the hardware, such as C.
@@ -69,7 +70,8 @@ q)n:1+til@ / first x natural numbers
 q)show i:n 20
 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 ```
-Above, `n` is defined as a composition of the unary projection `1+` and the unary keyword `til`, equivalent to `{1+til x}`.
+Above, `n` is a composition of the unary projection `1+` and the unary keyword `til`, equivalent to `{1+til x}`.
+It follows a pattern in which, if `u` and `v` are unaries, then `u v@` is equivalent to `{u v x}`.
 
 Every number is divisible by itself and 1. What other positive divisors _might_ it have?
 
@@ -104,7 +106,7 @@ q)(i; 2=sum each 0=i mod n each i)
 Above we exploited the iteration implicit in Equal and `mod`, but had to use `each` to iterate `sum` and `n`. 
 Would we do better with a lambda and a single iterator?
 
-The command `\ts` lets us compare execution time and memory use of the two expressions. We have ideas about what is likely to be efficient; this is a reality check. Run each a thousand times.
+The [system command](https://code.kx.com/q/basics/syscmds/) `\ts` lets us compare execution time and memory use of the two expressions. We have ideas about what is likely to be efficient; this is a reality check. Run each a thousand times.
 
 ```q
 q)\ts:1000 2=sum each 0=i mod n each i
@@ -136,7 +138,7 @@ q)ipf0 R
 The above illustrates an important development practice. 
 (Iversonian languages pioneered the [REPL](https://en.wikipedia.org/wiki/REPL "Wikipedia: Read–eval–print loop").)
 
-> Develop an algorithm by experiments in the REPL not on one but a _list_ of values.
+> Develop an algorithm by experiments in the REPL: not on one, but a _list_ of values.
 
 If we were using formal software-development methods, we would have started by writing a suite of tests.
 Our informal equivalent is to experiment with a list of values.
@@ -308,9 +310,6 @@ q)ptf0:{x where ipf2 x}n@
 q)ptf0 100
 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97
 ```
-
-The definition of `ptf0` above uses `@` to compose two unary functions: the lambda and `n`. 
-It follows a pattern in which if `u` and `v` are unaries, `u v@` is equivalent to `{u v x}`.
 
 A quite different strategy is the [Sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes "Wikipedia"), which does no arithmetic at all. As we discover primes, we eliminate their multiples from the candidates. 
 
@@ -576,7 +575,7 @@ We shall revisit this when we look at stateful solutions.
 
 ## Conclusion
 
-How far have we got? We have functional answers to the questions *Is X prime?* and *What are the primes up to N?* For the former we saved time by making tests smarter. We used the smarter tests to identify primes up to $N$ but found Eratosthenes’s sieve faster by two orders of magnitude. 
+How far have we got? We have functional answers to the questions *Is X prime?* and *What are the primes up to N?* For the former we saved time by making tests smarter. We used the smarter tests to identify primes up to*N* but found Eratosthenes’s sieve faster by two orders of magnitude. 
 
 We achieved all this without a single control-flow construct, and our vector solutions exploit machine architectures well. The resulting code occupies a handful of lines and imports no libraries.
 
