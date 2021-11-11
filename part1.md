@@ -1,5 +1,5 @@
 ---
-title: 'Finding primes with q
+title: 'Finding primes with q'
 description: 'Finding primes is a simple task with well-understood solutions. We use it for a close study of vector-programming techniques in q, with particular attention to the iteration operators. Part 1 develops purely functional solutions.'
 authors:
     - Noah Attrup
