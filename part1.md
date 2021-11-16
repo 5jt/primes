@@ -12,7 +12,7 @@ date: November 2021
 
 ## Part 1: Functional solutions
 
-<p style="text-align: right">by <a href="mailto:nattrup@kx.com">Noah Attrup</a> &amp; <a href="mailto:stephen@kx.com">Stephen Taylor</a></p>
+<p style="text-align: right">by <a href="mailto:nattrup@kx.com">Noah Attrup</a> and <a href="mailto:stephen@kx.com">Stephen Taylor</a></p>
 
 Finding prime numbers is a compute-intensive task familiar to computer-science students.
 It is typically tackled with tightly-iterating algorithms in a language close to the hardware, such as C.
